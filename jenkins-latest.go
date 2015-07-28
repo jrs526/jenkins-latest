@@ -32,15 +32,27 @@ func get(client *http.Client, hostPtr *string, userPtr *string, keyPtr *string, 
 
 	resp, err := client.Do(req)
 	if err != nil {
-		// Handle Err
+		fmt.Printf("Error: %s: %v\n", *jobPtr, err)
+		return
 	}
-
 	defer resp.Body.Close()
 
-	v := jenkinsrss.Feed{}
+	if resp.StatusCode != 200 {
+		fmt.Printf("Error: %s: %s\n", *jobPtr, resp.Status)
+		return
+	}
 
+	v := jenkinsrss.Feed{}
 	decoder := xml.NewDecoder(resp.Body)
 	err = decoder.Decode(&v)
+	if err != nil {
+		fmt.Printf("Error: %s: %v\n", *jobPtr, err)
+		return
+	}
 
+	if len(v.Entries) == 0 {
+		fmt.Printf("Error: %s: empty response\n", *jobPtr)
+		return
+	}
 	fmt.Printf("%v\n", v.Entries[0].Title)
 }
